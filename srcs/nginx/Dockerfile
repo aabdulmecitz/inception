@@ -1,0 +1,3 @@
+ARG OS_VERSION
+
+FROM debian:${OS_VERSION}
