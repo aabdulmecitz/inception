@@ -1,7 +1,7 @@
 PROJ		= inception
 COMPOSE		= docker compose -p $(PROJ) -f srcs/docker-compose.yml
 
-.PHONY: all build up down clean fclean re
+.PHONY: all build up down clean fclean re create_all
 
 all: build
 
@@ -21,5 +21,9 @@ fclean:
 	$(COMPOSE) down --rmi all -v
 
 re: fclean
-	$(MAKE) up --build
+	$(MAKE) build
+	$(MAKE) up
+
+create_all:
+	bash srcs/requirements/tools/setup.sh
 
