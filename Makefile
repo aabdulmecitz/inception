@@ -21,6 +21,5 @@ fclean:
 	$(COMPOSE) down --rmi all -v
 
 re: fclean
-	$(MAKE) build
-	$(MAKE) up
+	$(MAKE) up --build
 
