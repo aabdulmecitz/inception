@@ -12,7 +12,7 @@ RUN mkdir -p /etc/nginx/ssl && \
 
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 
-#sometimes /var/run/nginx directory will not created so we add this for guaranting
+# Sometimes /var/run/nginx directory will not be created, so we ensure it exists
 RUN mkdir -p /var/run/nginx
 
 CMD ["nginx", "-g", "daemon off;"]
