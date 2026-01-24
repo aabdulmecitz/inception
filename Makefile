@@ -1,5 +1,5 @@
-NAME		= inception
-COMPOSE		= docker compose -p $(NAME) -f docker-compose.yml
+PREF		= inception
+COMPOSE		= docker compose -p $(PROJ) -f docker-compose.yml
 
 .PHONY: all build up down clean fclean re
 

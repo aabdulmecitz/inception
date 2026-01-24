@@ -9,6 +9,7 @@ services:
       - wordpress
     networks:
       - inception-network
+    # Your containers have to restart in case of a crash so I did this vvv
     restart: always
   
   wordpress:
@@ -39,4 +40,14 @@ networks:
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/aozkaya/data/mariadb
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/aozkaya/data/wordpress

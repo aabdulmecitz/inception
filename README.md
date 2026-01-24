@@ -120,4 +120,21 @@ All containers are built from a `debian` base image and orchestrated using `dock
   - Confirm that nginx serves WordPress over HTTPS.
   - Check that the proxy to PHP-FPM is working (no 502/504 errors).
 
+  **NOTES**
+  standardly when we open a volume the system includes the data to where named **/var/lib/docker/volumes/xxxxx** so we dont need this. the subject says Both named volumes must store their data inside /home/login/data on the host machine." "You must use Docker named volumes for these two persistent storages. Bind mounts are not allowed for these volumes. Throughout, We redefined the saving data places as **/home/aozkaya/data/wordpress and /home/aozkaya/data/mariadb**.
+
+  services:
+    mariadb:
+      image: mariadb
+        ... diğer ayarlar ...
+      deploy:
+        resources:
+          limits:
+            cpus: '0.50'    # İşlemcinin yarısını (%50) kullanabilir.
+            memory: 512M    # En fazla 512 Megabyte RAM kullanabilir.
+          reservations:
+            cpus: '0.25'    # En az %25 işlemci gücünü ona garanti et.
+            memory: 128M    # En az 128 MB RAM'i ona ayır.
+
+
 Once all these steps are working, your mandatory part of the Inception project should be complete.
