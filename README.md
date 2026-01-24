@@ -136,5 +136,9 @@ All containers are built from a `debian` base image and orchestrated using `dock
             cpus: '0.25'    # En az %25 işlemci gücünü ona garanti et.
             memory: 128M    # En az 128 MB RAM'i ona ayır.
 
+  **docker exec -it nginx bash** you can enter inside of the docker container. however the thing is just an illusion. you have not exactly any permission, ram or cpu. everything is a illusion. so that makes senes why the project name is inception. normally the virtual machines provides a isolated machines but docker provides isolated processes. actually you are not build any isolated machine, it just a program that is isolated with a jail cell.
 
+  RUN working for building time. but CMD works just a time.
+
+  
 Once all these steps are working, your mandatory part of the Inception project should be complete.
