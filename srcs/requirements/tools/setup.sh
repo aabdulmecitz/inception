@@ -37,7 +37,7 @@ echo -e "${GREEN}✓ Permissions set${NC}"
 
 # 3. Build Docker images
 echo -e "${YELLOW}3. Building Docker images (this may take a while)...${NC}"
-cd /home/aabdulmecitz/inception
+cd /home/aozkaya/inception
 make build
 check_error "Docker build failed"
 echo -e "${GREEN}✓ Docker images built${NC}"

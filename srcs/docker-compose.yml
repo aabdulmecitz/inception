@@ -9,6 +9,8 @@ services:
       - wordpress
     networks:
       - inception-network
+    volumes:
+      - wordpress_data:/var/www/html:ro
     # Your containers have to restart in case of a crash so I did this vvv
     restart: always
   

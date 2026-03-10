@@ -1,29 +1,45 @@
 #!/bin/bash
 
-# MariaDB Setup Script
-# Database and user initialization
+set -e
 
 echo "MariaDB service is starting..."
 
-# Prepare data directory
+: "${SQL_DATABASE:=wordpress}"
+: "${SQL_USER:=aozkaya}"
+: "${SQL_PASSWORD:=gizlisifre}"
+: "${SQL_ROOT_PASSWORD:=cokgizlisifre}"
+
 if [ ! -d /var/lib/mysql/mysql ]; then
     echo "Database starting for the first time..."
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql
-    
-    # Execute initialization script
-    /usr/sbin/mariadbd --user=mysql --bind-address=0.0.0.0 &
-    sleep 3
-    
-    # Run init.sql file
-    if [ -f /docker-entrypoint-initdb.d/init.sql ]; then
-        echo "Running SQL script..."
-        mysql -u root < /docker-entrypoint-initdb.d/init.sql
-    fi
-    
-    # Stop MariaDB
-    pkill mariadbd
-    sleep 2
+    mariadb-install-db --user=mysql --datadir=/var/lib/mysql
 fi
 
-# Start MariaDB server (in foreground mode)
+/usr/sbin/mariadbd --user=mysql --skip-networking --socket=/run/mysqld/mysqld.sock &
+
+echo "Waiting for temporary MariaDB startup..."
+until mariadb-admin --socket=/run/mysqld/mysqld.sock ping >/dev/null 2>&1; do
+    sleep 1
+done
+
+if mariadb --socket=/run/mysqld/mysqld.sock -u root -e "SELECT 1" >/dev/null 2>&1; then
+    ROOT_AUTH=""
+elif mariadb --socket=/run/mysqld/mysqld.sock -u root -p"${SQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; then
+    ROOT_AUTH="-p${SQL_ROOT_PASSWORD}"
+else
+    echo "Cannot authenticate as MariaDB root user."
+    exit 1
+fi
+
+echo "Ensuring database and users..."
+mariadb --socket=/run/mysqld/mysqld.sock -u root ${ROOT_AUTH} <<-EOSQL
+    CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
+    CREATE USER IF NOT EXISTS '${SQL_USER}'@'%' IDENTIFIED BY '${SQL_PASSWORD}';
+    ALTER USER '${SQL_USER}'@'%' IDENTIFIED BY '${SQL_PASSWORD}';
+    GRANT ALL PRIVILEGES ON \`${SQL_DATABASE}\`.* TO '${SQL_USER}'@'%';
+    ALTER USER 'root'@'localhost' IDENTIFIED BY '${SQL_ROOT_PASSWORD}';
+    FLUSH PRIVILEGES;
+EOSQL
+
+mariadb-admin --socket=/run/mysqld/mysqld.sock -u root -p"${SQL_ROOT_PASSWORD}" shutdown
+
 exec /usr/sbin/mariadbd --user=mysql --bind-address=0.0.0.0

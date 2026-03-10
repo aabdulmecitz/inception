@@ -1,6 +1,4 @@
-ARG OS_VERSION
-
-FROM debian:${OS_VERSION}
+FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y nginx openssl
 
