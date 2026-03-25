@@ -1,0 +1,8 @@
+# Local environment and secrets
+srcs/.env
+secrets/
+
+# OS/editor files
+.DS_Store
+*.swp
+*.swo

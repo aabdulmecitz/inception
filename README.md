@@ -1,144 +1,105 @@
-# inception
+*This project has been created as part of the 42 curriculum by aozkaya.*
 
-## Project Overview
+# Inception
 
-This project sets up a small infrastructure composed of three Docker containers:
-- **nginx**: reverse proxy and HTTPS termination
-- **wordpress**: PHP-FPM + WordPress application
-- **mariadb**: database server for WordPress
+## Description
+This project deploys a small multi-service infrastructure with Docker Compose, following the mandatory Inception rules.
 
-All containers are built from a `debian` base image and orchestrated using `docker-compose.yml`.
+The stack contains exactly three services:
+- `nginx` (TLS termination, only port 443 exposed)
+- `wordpress` (WordPress + PHP-FPM, no nginx)
+- `mariadb` (database only)
 
-## Roadmap
+It also uses:
+- one dedicated Docker network
+- two named volumes for persistence:
+  - WordPress files
+  - MariaDB data
 
-### 1. Global Setup
+## System diagram
+Expected traffic/data flow is:
 
-- **Define environment variables**
-  - Create a `.env` file at the project root.
-  - Add variables for:
-    - Domain name (e.g. `DOMAIN_NAME`)
-    - MariaDB root password, user, password, and database name
-    - WordPress admin/user credentials
+`WWW -> 443 -> NGINX -> 9000 -> WordPress/PHP-FPM -> 3306 -> MariaDB`
 
-- **Check basic structure**
-  - Keep the three services: `nginx`, `wordpress`, `mariadb` under `srcs/`.
-  - Ensure `docker-compose.yml` points to the correct build contexts:
-    - `./srcs/nginx`
-    - `./srcs/wordpress`
-    - `./srcs/mariadb`
+Persistent storage:
+- MariaDB container -> `mariadb_data`
+- WordPress container -> `wordpress_data`
 
-### 2. MariaDB Service (`srcs/mariadb`)
+## Project Description and Design Choices
+### Why Docker in this project
+Docker provides isolated services, reproducible builds, and simple orchestration with Compose. It allows each service to stay independent and connected only through an explicit network.
 
-- **Dockerfile**
-  - Start from `debian:${OS_VERSION}`.
-  - Install MariaDB server and client.
-  - Create a non-root user to run the service.
-  - Copy a `tools/setup.sh` script and make it the container entrypoint or command.
+### Included sources
+- [Makefile](Makefile): project lifecycle commands
+- [srcs/docker-compose.yml](srcs/docker-compose.yml): service orchestration, network, volumes
+- [srcs/.env.example](srcs/.env.example): environment variable template
+- [srcs/requirements/mariadb](srcs/requirements/mariadb): MariaDB image and init script
+- [srcs/requirements/wordpress](srcs/requirements/wordpress): WordPress + PHP-FPM image and install script
+- [srcs/requirements/nginx](srcs/requirements/nginx): NGINX image, TLS, runtime config template
 
-- **Setup script**
-  - Read credentials from environment variables.
-  - Initialize the database, create the WordPress database and user.
-  - Ensure the data directory is owned by the non-root user.
+### Required comparisons
+#### Virtual Machines vs Docker
+- VM: virtualizes full OS, heavier resource usage, slower boot.
+- Docker: process-level isolation on host kernel, lighter, faster startup.
 
-- **Compose configuration**
-  - In `docker-compose.yml`, add a named volume for MariaDB data.
-  - Attach the service to `inception-network`.
+#### Secrets vs Environment Variables
+- Environment variables are convenient for non-sensitive configuration.
+- Secrets are safer for credentials because they are not stored directly in image layers or plain text env files.
 
-### 3. WordPress Service (`srcs/wordpress`)
+#### Docker Network vs Host Network
+- Docker bridge network isolates container traffic and enables service-name DNS.
+- Host network removes that isolation and is forbidden by project rules.
 
-- **Dockerfile**
-  - Start from `debian:${OS_VERSION}`.
-  - Install PHP-FPM and required PHP extensions.
-  - Download and install WordPress into a web root directory.
-  - Create and configure `wp-config.php` using environment variables.
+#### Docker Volumes vs Bind Mounts
+- Docker named volumes are managed by Docker and easier to migrate and control.
+- Bind mounts directly couple services to host paths and are less portable.
 
-- **Runtime configuration**
-  - Configure PHP-FPM to listen on a socket or port that nginx can reach.
-  - Make sure file permissions allow the non-root user to run PHP-FPM and write where needed.
+## Instructions
+### Prerequisites
+- Linux VM
+- Docker + Docker Compose plugin
+- `/etc/hosts` entry for your domain:
+  - `127.0.0.1 aozkaya.42.fr` (or your VM IP)
 
-- **Compose configuration**
-  - Add a volume for WordPress data (uploads, etc.) if required by the subject.
-  - Use `env_file: .env` to inject environment variables (already present).
-  - Link `wordpress` to `mariadb` via the common network.
+### Configuration
+1. Copy [srcs/.env.example](srcs/.env.example) to `srcs/.env`.
+2. Fill all values in `srcs/.env`.
+3. Keep admin username compliant (must not contain `admin`).
 
-### 4. Nginx Service (`srcs/nginx`)
+### Build and run
+- `make`
+- or `make up`
+- or one-shot setup: `bash setup.sh`
 
-- **Dockerfile**
-  - Start from `debian:${OS_VERSION}`.
-  - Install nginx and openssl.
-  - Create a non-root user for nginx.
-  - Copy nginx configuration and SSL certificates into the image.
+### Stop
+- `make down`
 
-- **SSL & configuration**
-  - Write a script to generate a self-signed certificate (or follow project requirements).
-  - Configure nginx:
-    - Listen on port 443 with SSL.
-    - Use the generated certificate and key.
-    - Proxy PHP requests to the WordPress/PHP-FPM service.
-    - Set the server name to your domain from `.env`.
+### Clean
+- `make clean` (containers + local images)
+- `make fclean` (full cleanup including volumes)
 
-- **Compose configuration**
-  - Expose port `443:443` (already present).
-  - Attach the service to `inception-network`.
+## Validation checklist (mandatory)
+- Only NGINX exposes port 443
+- TLS is restricted to v1.2/v1.3
+- No prebuilt service images are pulled
+- Each service has its own Dockerfile/container
+- WordPress and MariaDB persist through named volumes
+- Both volumes store data under `/home/aozkaya/data`
+- Dedicated Docker network is defined in compose
+- Containers restart on failure
+- WordPress has 2 users (admin + regular user)
 
-### 5. `docker-compose.yml` Refinement
+## Resources
+- Docker docs: https://docs.docker.com/
+- Compose docs: https://docs.docker.com/compose/
+- NGINX docs: https://nginx.org/en/docs/
+- MariaDB docs: https://mariadb.org/documentation/
+- WordPress CLI docs: https://developer.wordpress.org/cli/commands/
 
-- **Add volumes**
-  - Define named volumes for:
-    - MariaDB data
-    - WordPress data (if required)
+### AI usage disclosure
+AI assistance was used for:
+- requirement cross-checking against the mandatory subject
+- script hardening suggestions (runtime checks and env validation)
+- documentation drafting and structure alignment
 
-- **Service dependencies**
-  - Use `depends_on` so that `wordpress` waits for `mariadb`.
-  - Optionally, ensure `nginx` depends on `wordpress`.
-
-- **Restart policies**
-  - Add `restart: always` (or as required) for each service.
-
-### 6. Makefile (`Makefile`)
-
-- **Implement standard targets**
-  - `make build`: build all Docker images.
-  - `make up`: start containers with `docker compose up -d`.
-  - `make down`: stop containers with `docker compose down`.
-  - `make clean`: remove containers and images created for the project.
-  - `make fclean`: full cleanup including named volumes.
-  - `make re`: run `fclean` then `build` and `up`.
-
-### 7. Testing Checklist
-
-- **MariaDB**
-  - Check that the database and user defined in `.env` are created.
-  - Verify that data persists across container restarts.
-
-- **WordPress**
-  - Access the WordPress setup page.
-  - Complete installation and log in to the admin dashboard.
-
-- **Nginx & SSL**
-  - Open `https://<your-domain>` in a browser.
-  - Confirm that nginx serves WordPress over HTTPS.
-  - Check that the proxy to PHP-FPM is working (no 502/504 errors).
-
-  **NOTES**
-  standardly when we open a volume the system includes the data to where named **/var/lib/docker/volumes/xxxxx** so we dont need this. the subject says Both named volumes must store their data inside /home/login/data on the host machine." "You must use Docker named volumes for these two persistent storages. Bind mounts are not allowed for these volumes. Throughout, We redefined the saving data places as **/home/aozkaya/data/wordpress and /home/aozkaya/data/mariadb**.
-
-  services:
-    mariadb:
-      image: mariadb
-        ... diğer ayarlar ...
-      deploy:
-        resources:
-          limits:
-            cpus: '0.50'    # İşlemcinin yarısını (%50) kullanabilir.
-            memory: 512M    # En fazla 512 Megabyte RAM kullanabilir.
-          reservations:
-            cpus: '0.25'    # En az %25 işlemci gücünü ona garanti et.
-            memory: 128M    # En az 128 MB RAM'i ona ayır.
-
-  **docker exec -it nginx bash** you can enter inside of the docker container. however the thing is just an illusion. you have not exactly any permission, ram or cpu. everything is a illusion. so that makes senes why the project name is inception. normally the virtual machines provides a isolated machines but docker provides isolated processes. actually you are not build any isolated machine, it just a program that is isolated with a jail cell.
-
-  RUN working for building time. but CMD works just a time.
-
-  
-Once all these steps are working, your mandatory part of the Inception project should be complete.
+All architecture decisions, final implementation, and verification were reviewed and adjusted manually.

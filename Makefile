@@ -1,14 +1,19 @@
 PROJ		= inception
 COMPOSE		= docker compose -p $(PROJ) -f srcs/docker-compose.yml
+DATA_DIR		= /home/aozkaya/data
 
-.PHONY: all build up down clean fclean re create_all
+.PHONY: all build up down clean fclean re create_all setup_dirs
 
-all: build
+all: up
 
-build:
+setup_dirs:
+	mkdir -p $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress
+	chmod 755 $(DATA_DIR)/mariadb $(DATA_DIR)/wordpress 2>/dev/null || true
+
+build: setup_dirs
 	$(COMPOSE) build
 
-up:
+up: build
 	$(COMPOSE) up -d
 
 down:
@@ -25,5 +30,5 @@ re: fclean
 	$(MAKE) up
 
 create_all:
-	bash srcs/requirements/tools/setup.sh
+	bash setup.sh
 

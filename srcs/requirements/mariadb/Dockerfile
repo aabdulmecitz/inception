@@ -8,8 +8,6 @@ RUN mkdir -p /var/run/mysqld && \
     chown -R mysql:mysql /var/run/mysqld && \
     chown -R mysql:mysql /var/lib/mysql
 
-COPY conf/init.sql /docker-entrypoint-initdb.d/
-
 COPY tools/setup.sh /
 RUN chmod +x /setup.sh
 

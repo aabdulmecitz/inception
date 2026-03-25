@@ -1,5 +1,6 @@
 services:
   nginx:
+    image: nginx
     build: ./requirements/nginx
     ports:
       - "443:443"
@@ -15,6 +16,7 @@ services:
     restart: always
   
   wordpress:
+    image: wordpress
     build: ./requirements/wordpress
     env_file:
       - .env
@@ -27,6 +29,7 @@ services:
       - wordpress_data:/var/www/html
   
   mariadb:
+    image: mariadb
     build: ./requirements/mariadb
     env_file:
       - .env
@@ -46,10 +49,10 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/aozkaya/data/mariadb
+      device: ${DATA_ROOT}/mariadb
   wordpress_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/aozkaya/data/wordpress
+      device: ${DATA_ROOT}/wordpress

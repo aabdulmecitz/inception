@@ -4,14 +4,17 @@ set -e
 
 echo "MariaDB service is starting..."
 
-: "${SQL_DATABASE:=wordpress}"
-: "${SQL_USER:=aozkaya}"
-: "${SQL_PASSWORD:=gizlisifre}"
-: "${SQL_ROOT_PASSWORD:=cokgizlisifre}"
+: "${SQL_DATABASE:?SQL_DATABASE is required}"
+: "${SQL_USER:?SQL_USER is required}"
+: "${SQL_PASSWORD:?SQL_PASSWORD is required}"
+: "${SQL_ROOT_PASSWORD:?SQL_ROOT_PASSWORD is required}"
 
 if [ ! -d /var/lib/mysql/mysql ]; then
     echo "Database starting for the first time..."
     mariadb-install-db --user=mysql --datadir=/var/lib/mysql
+    DB_WAS_INITIALIZED=true
+else
+    DB_WAS_INITIALIZED=false
 fi
 
 /usr/sbin/mariadbd --user=mysql --skip-networking --socket=/run/mysqld/mysqld.sock &
@@ -26,7 +29,12 @@ if mariadb --socket=/run/mysqld/mysqld.sock -u root -e "SELECT 1" >/dev/null 2>&
 elif mariadb --socket=/run/mysqld/mysqld.sock -u root -p"${SQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; then
     ROOT_AUTH="-p${SQL_ROOT_PASSWORD}"
 else
-    echo "Cannot authenticate as MariaDB root user."
+    echo "Cannot authenticate as MariaDB root user with current environment password."
+    if [ "$DB_WAS_INITIALIZED" = false ]; then
+        echo "Existing data detected, skipping bootstrap SQL and starting MariaDB normally."
+        mariadb-admin --socket=/run/mysqld/mysqld.sock shutdown || true
+        exec /usr/sbin/mariadbd --user=mysql --bind-address=0.0.0.0
+    fi
     exit 1
 fi
 

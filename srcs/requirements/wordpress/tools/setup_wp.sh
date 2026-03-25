@@ -2,9 +2,25 @@
 
 set -e
 
-# 1. Veritabanının uyanmasını bekle (MariaDB konteyneri)
-# WordPress, veritabanı olmadan kurulamaz. MariaDB bizden biraz geç açılabilir.
-# O yüzden "mysqladmin" ile sürekli dürtüp "Uyandın mı?" diye soruyoruz.
+: "${SQL_HOST:?SQL_HOST is required}"
+: "${SQL_DATABASE:?SQL_DATABASE is required}"
+: "${SQL_USER:?SQL_USER is required}"
+: "${SQL_PASSWORD:?SQL_PASSWORD is required}"
+: "${DOMAIN_NAME:?DOMAIN_NAME is required}"
+: "${SITE_TITLE:?SITE_TITLE is required}"
+: "${WP_ADMIN_USER:?WP_ADMIN_USER is required}"
+: "${WP_ADMIN_PASSWORD:?WP_ADMIN_PASSWORD is required}"
+: "${WP_ADMIN_EMAIL:?WP_ADMIN_EMAIL is required}"
+: "${WP_USER:?WP_USER is required}"
+: "${WP_PASSWORD:?WP_PASSWORD is required}"
+: "${WP_EMAIL:?WP_EMAIL is required}"
+
+if echo "${WP_ADMIN_USER}" | grep -Eiq 'admin'; then
+    echo "Error: WP_ADMIN_USER must not contain 'admin' or 'administrator'."
+    exit 1
+fi
+
+# Wait until MariaDB accepts connections.
 while ! mariadb -h"${SQL_HOST}" -u"${SQL_USER}" -p"${SQL_PASSWORD}" "${SQL_DATABASE}" -e "SELECT 1" &>/dev/null; do
     echo "MariaDB bekleniyor..."
     sleep 3
@@ -12,16 +28,12 @@ done
 
 echo "MariaDB bağlantısı başarılı!"
 
-# 2. WordPress daha önce kurulmuş mu kontrol et
-# Eğer wp-config.php varsa, zaten kuruludur. Tekrar kurmaya çalışma.
+# If wp-config.php exists, WordPress configuration is already in place.
 if [ ! -f ./wp-config.php ]; then
     echo "WordPress kurulumu başlıyor..."
 
-    # 3. WordPress Çekirdek Dosyalarını İndir
     wp core download --allow-root
 
-    # 4. Ayar Dosyasını (wp-config.php) Oluştur
-    # Veritabanı bilgilerini .env dosyasından alıp buraya yazar.
     wp config create \
         --dbname="${SQL_DATABASE}" \
         --dbuser="${SQL_USER}" \
@@ -33,8 +45,6 @@ fi
 if wp core is-installed --allow-root; then
     echo "WordPress zaten kurulu."
 else
-    # 5. WordPress'i Kur (Site Başlığı, Admin Kullanıcısı)
-    # Bu adım veritabanına tabloları yazar.
     wp core install \
         --url="https://${DOMAIN_NAME}" \
         --title="${SITE_TITLE}" \
@@ -43,8 +53,6 @@ else
         --admin_email="${WP_ADMIN_EMAIL}" \
         --allow-root
 
-    # 6. İkinci Kullanıcıyı Oluştur (Proje Kuralı)
-    # Admin dışında bir kullanıcı daha olmak zorunda.
     if ! wp user get "${WP_USER}" --field=user_login --allow-root >/dev/null 2>&1; then
         wp user create \
             "${WP_USER}" \
