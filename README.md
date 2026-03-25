@@ -97,9 +97,10 @@ Docker provides isolated services, reproducible builds, and simple orchestration
 - WordPress CLI docs: https://developer.wordpress.org/cli/commands/
 
 ### AI usage disclosure
-AI assistance was used for:
-- requirement cross-checking against the mandatory subject
-- script hardening suggestions (runtime checks and env validation)
-- documentation drafting and structure alignment
+AI was used as a learning support system for:
+- understanding mandatory subject expectations and evaluation criteria
+- comparing implementation options before coding
+- reviewing scripts for robustness ideas (runtime checks and env validation)
+- improving documentation clarity and structure
 
-All architecture decisions, final implementation, and verification were reviewed and adjusted manually.
+Final technical decisions, implementation, testing, and validation were done manually.
