@@ -22,15 +22,15 @@ fi
 
 # Wait until MariaDB accepts connections.
 while ! mariadb -h"${SQL_HOST}" -u"${SQL_USER}" -p"${SQL_PASSWORD}" "${SQL_DATABASE}" -e "SELECT 1" &>/dev/null; do
-    echo "MariaDB bekleniyor..."
+    echo "Waiting for MariaDB..."
     sleep 3
 done
 
-echo "MariaDB bağlantısı başarılı!"
+echo "MariaDB connection successful!"
 
 # If wp-config.php exists, WordPress configuration is already in place.
 if [ ! -f ./wp-config.php ]; then
-    echo "WordPress kurulumu başlıyor..."
+    echo "Starting WordPress setup..."
 
     wp core download --allow-root
 
@@ -43,7 +43,7 @@ if [ ! -f ./wp-config.php ]; then
 fi
 
 if wp core is-installed --allow-root; then
-    echo "WordPress zaten kurulu."
+    echo "WordPress is already installed."
 else
     wp core install \
         --url="https://${DOMAIN_NAME}" \
@@ -62,7 +62,7 @@ else
             --allow-root
     fi
 
-    echo "WordPress kurulumu tamamlandı!"
+    echo "WordPress setup completed!"
 fi
 
 exec /usr/sbin/php-fpm8.2 -F
