@@ -1,0 +1,58 @@
+services:
+  nginx:
+    image: nginx
+    build: ./requirements/nginx
+    ports:
+      - "443:443"
+    env_file:
+      - .env
+    depends_on:
+      - wordpress
+    networks:
+      - inception-network
+    volumes:
+      - wordpress_data:/var/www/html:ro
+    # Your containers have to restart in case of a crash so I did this vvv
+    restart: always
+  
+  wordpress:
+    image: wordpress
+    build: ./requirements/wordpress
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+    networks:
+      - inception-network
+    restart: always
+    volumes:
+      - wordpress_data:/var/www/html
+  
+  mariadb:
+    image: mariadb
+    build: ./requirements/mariadb
+    env_file:
+      - .env
+    networks:
+      - inception-network
+    restart: always
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+networks:
+  inception-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_ROOT}/mariadb
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_ROOT}/wordpress
