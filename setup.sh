@@ -5,7 +5,6 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 COMPOSE_CMD=(docker compose -p inception -f "$PROJECT_ROOT/srcs/docker-compose.yml")
 ENV_FILE="$PROJECT_ROOT/srcs/.env"
-ENV_EXAMPLE="$PROJECT_ROOT/srcs/.env.example"
 
 info() { echo "[INFO] $*"; }
 warn() { echo "[WARN] $*"; }
@@ -27,6 +26,42 @@ write_env_var() {
     else
         printf '%s=%s\n' "$key" "$value" >> "$ENV_FILE"
     fi
+}
+
+create_default_env() {
+    local login_user="$1"
+
+    cat > "$ENV_FILE" <<EOF
+OS_VERSION=bookworm
+
+# Project General Settings
+DOMAIN_NAME=${login_user}.42.fr
+DATA_ROOT=/home/${login_user}/data
+
+# NGINX TLS certificate subject
+SSL_COUNTRY=TR
+SSL_STATE=Istanbul
+SSL_LOCALITY=Istanbul
+SSL_ORG=42Istanbul
+SSL_OU=Student
+
+# Database Information
+SQL_DATABASE=wordpress
+SQL_USER=wp_user
+SQL_PASSWORD=change_me_sql_user_password
+SQL_HOST=mariadb
+SQL_ROOT_PASSWORD=change_me_sql_root_password
+
+# WordPress Information
+SITE_TITLE=Inception
+WP_ADMIN_USER=siteowner
+WP_ADMIN_PASSWORD=change_me_wp_admin_password
+WP_ADMIN_EMAIL=admin@student.42.fr
+
+WP_USER=authoruser
+WP_PASSWORD=change_me_wp_user_password
+WP_EMAIL=user@student.42.fr
+EOF
 }
 
 ensure_hosts_entry() {
@@ -62,14 +97,12 @@ main() {
         exit 1
     fi
 
+    local login_user
+    login_user="${SUDO_USER:-${USER}}"
+
     if [[ ! -f "$ENV_FILE" ]]; then
-        if [[ -f "$ENV_EXAMPLE" ]]; then
-            info "Creating srcs/.env from srcs/.env.example"
-            cp "$ENV_EXAMPLE" "$ENV_FILE"
-        else
-            err "Missing srcs/.env and srcs/.env.example"
-            exit 1
-        fi
+        info "Creating default srcs/.env"
+        create_default_env "$login_user"
     fi
 
     set -a
@@ -79,8 +112,6 @@ main() {
 
     : "${DOMAIN_NAME:?DOMAIN_NAME must be set in srcs/.env}"
 
-    local login_user
-    login_user="${SUDO_USER:-${USER}}"
     local default_data_root="/home/${login_user}/data"
 
     if [[ -z "${DATA_ROOT:-}" ]]; then

@@ -3,73 +3,65 @@
 # Inception
 
 ## Description
-This project deploys a small multi-service infrastructure with Docker Compose, following the mandatory Inception rules.
+This project builds a secure WordPress stack with Docker Compose in a VM.
 
-The stack contains exactly three services:
-- `nginx` (TLS termination, only port 443 exposed)
-- `wordpress` (WordPress + PHP-FPM, no nginx)
-- `mariadb` (database only)
+Services:
+- `nginx`: only public entrypoint on port `443` with TLS (`v1.2/v1.3`)
+- `wordpress`: PHP-FPM + WordPress
+- `mariadb`: database backend
 
-It also uses:
-- one dedicated Docker network
-- two named volumes for persistence:
-  - WordPress files
-  - MariaDB data
+Infrastructure:
+- one dedicated Docker bridge network
+- two named volumes stored on host under `/home/<login>/data`
 
 ## System diagram
-Expected traffic/data flow is:
-
-`WWW -> 443 -> NGINX -> 9000 -> WordPress/PHP-FPM -> 3306 -> MariaDB`
-
-Persistent storage:
-- MariaDB container -> `mariadb_data`
-- WordPress container -> `wordpress_data`
+`Browser -> 443/TLS -> NGINX -> wordpress:9000 -> mariadb:3306`
 
 ## Project Description and Design Choices
 ### Why Docker in this project
-Docker provides isolated services, reproducible builds, and simple orchestration with Compose. It allows each service to stay independent and connected only through an explicit network.
+Docker gives process isolation, reproducibility, and clean service boundaries with Compose orchestration.
 
 ### Included sources
-- [Makefile](Makefile): project lifecycle commands
-- [srcs/docker-compose.yml](srcs/docker-compose.yml): service orchestration, network, volumes
-- [srcs/.env.example](srcs/.env.example): environment variable template
-- [srcs/requirements/mariadb](srcs/requirements/mariadb): MariaDB image and init script
-- [srcs/requirements/wordpress](srcs/requirements/wordpress): WordPress + PHP-FPM image and install script
-- [srcs/requirements/nginx](srcs/requirements/nginx): NGINX image, TLS, runtime config template
+- `Makefile`: build/run lifecycle
+- `srcs/docker-compose.yml`: services, network, volumes
+- `srcs/requirements/nginx`: NGINX Dockerfile + TLS config
+- `srcs/requirements/wordpress`: WordPress/PHP-FPM Dockerfile + setup script
+- `srcs/requirements/mariadb`: MariaDB Dockerfile + init script
 
 ### Required comparisons
 #### Virtual Machines vs Docker
-- VM: virtualizes full OS, heavier resource usage, slower boot.
-- Docker: process-level isolation on host kernel, lighter, faster startup.
+- VM: full guest OS, heavier and slower startup.
+- Docker: shared host kernel, lighter and faster.
 
 #### Secrets vs Environment Variables
-- Environment variables are convenient for non-sensitive configuration.
-- Secrets are safer for credentials because they are not stored directly in image layers or plain text env files.
+- `.env`: convenient for configuration and project variables.
+- Docker secrets: better for sensitive credentials in production.
 
 #### Docker Network vs Host Network
-- Docker bridge network isolates container traffic and enables service-name DNS.
-- Host network removes that isolation and is forbidden by project rules.
+- Bridge network: isolated traffic + internal DNS by service name.
+- Host network: no isolation, forbidden for this project.
 
 #### Docker Volumes vs Bind Mounts
-- Docker named volumes are managed by Docker and easier to migrate and control.
-- Bind mounts directly couple services to host paths and are less portable.
+- Named volumes: managed persistence and portability.
+- Bind mounts: direct host coupling; more fragile.
 
 ## Instructions
 ### Prerequisites
 - Linux VM
 - Docker + Docker Compose plugin
-- `/etc/hosts` entry for your domain:
-  - `127.0.0.1 aozkaya.42.fr` (or your VM IP)
+- `/etc/hosts` entry for your domain (example):
+  - `127.0.0.1 <login>.42.fr`
 
 ### Configuration
-1. Copy [srcs/.env.example](srcs/.env.example) to `srcs/.env`.
-2. Fill all values in `srcs/.env`.
-3. Keep admin username compliant (must not contain `admin`).
+The project requires `srcs/.env` to run.
+- If missing, `make run` auto-generates a default `srcs/.env` template.
+- `make setall` also creates it automatically during one-shot setup.
+- After creation, edit `srcs/.env` with your real credentials and login.
 
 ### Build and run
-- `make`
-- or `make up`
-- or one-shot setup: `bash setup.sh`
+- `make run` (recommended)
+- `make` (alias of `make run`)
+- one-shot full setup + run: `make setall`
 
 ### Stop
 - `make down`
@@ -78,13 +70,20 @@ Docker provides isolated services, reproducible builds, and simple orchestration
 - `make clean` (containers + local images)
 - `make fclean` (full cleanup including volumes)
 
+### Quick defense script (30 seconds)
+1. “There are 3 containers: NGINX, WordPress(PHP-FPM), MariaDB.”
+2. “Only NGINX is exposed, only on `443` with TLS 1.2/1.3.”
+3. “Containers communicate on a dedicated bridge network.”
+4. “Data persists in named volumes mapped to `/home/<login>/data`.”
+5. “`make run` starts everything; `make setall` performs full first-time setup.”
+
 ## Validation checklist (mandatory)
 - Only NGINX exposes port 443
 - TLS is restricted to v1.2/v1.3
 - No prebuilt service images are pulled
 - Each service has its own Dockerfile/container
 - WordPress and MariaDB persist through named volumes
-- Both volumes store data under `/home/aozkaya/data`
+- Both volumes store data under `/home/<login>/data`
 - Dedicated Docker network is defined in compose
 - Containers restart on failure
 - WordPress has 2 users (admin + regular user)
