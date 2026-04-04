@@ -43,6 +43,27 @@ Compose file:
 - Inspect a volume:
   - `docker volume inspect <volume_name>`
 
+## Working inside containers (VM-like usage for debugging)
+You can enter each running container and work interactively (inspect files, run service commands, test configs), similar to a minimal VM workflow.
+
+- Open shell in NGINX:
+  - `docker compose -p inception -f srcs/docker-compose.yml exec nginx bash`
+- Open shell in WordPress:
+  - `docker compose -p inception -f srcs/docker-compose.yml exec wordpress bash`
+- Open shell in MariaDB:
+  - `docker compose -p inception -f srcs/docker-compose.yml exec mariadb bash`
+
+Common in-container checks:
+- NGINX config test: `nginx -t`
+- PHP-FPM process check: `ps aux | grep php-fpm`
+- MariaDB login test:
+  - `mariadb -u$SQL_USER -p$SQL_PASSWORD $SQL_DATABASE`
+
+Notes:
+- Containers are not full virtual machines; they are isolated processes.
+- Any package/config changes done manually inside a container are ephemeral after container recreation.
+- Permanent changes must be made in Dockerfiles or setup scripts, then rebuilt.
+
 ## Evaluation-oriented checks
 - No forbidden network mode: ensure no `network: host`, no `links`, no `--link`
 - No hacky loop process: no `tail -f`, `sleep infinity`, `while true`
