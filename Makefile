@@ -53,10 +53,10 @@ build: setup_dirs ensure_env
 up: build
 	$(COMPOSE) up -d
 
-run: up
+run: setall up
 
 setall:
-	bash setup.sh
+	bash setup.sh --prepare
 
 down:
 	$(COMPOSE) down
@@ -72,5 +72,5 @@ re: fclean
 	$(MAKE) up
 
 create_all:
-	bash setup.sh
+	$(MAKE) setall
 

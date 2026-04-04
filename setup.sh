@@ -10,6 +10,16 @@ info() { echo "[INFO] $*"; }
 warn() { echo "[WARN] $*"; }
 err() { echo "[ERROR] $*"; }
 
+usage() {
+        cat <<EOF
+Usage: $0 [--prepare|--no-start]
+
+Options:
+    --prepare, --no-start   Only do prerequisite setup (.env, data dirs, /etc/hosts).
+    -h, --help              Show this help message.
+EOF
+}
+
 require_cmd() {
     command -v "$1" >/dev/null 2>&1 || {
         err "Missing command: $1"
@@ -82,6 +92,26 @@ ensure_hosts_entry() {
 }
 
 main() {
+    local prepare_only=false
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --prepare|--no-start)
+                prepare_only=true
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                err "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+        esac
+    done
+
     info "Starting one-shot Inception setup"
 
     require_cmd docker
@@ -129,6 +159,13 @@ main() {
     fi
 
     ensure_hosts_entry "$DOMAIN_NAME" "127.0.0.1"
+
+    if [[ "$prepare_only" == true ]]; then
+        echo
+        echo "Setup completed (prepare-only)."
+        echo "Run 'make' to build and start containers."
+        return
+    fi
 
     info "Building images"
     "${COMPOSE_CMD[@]}" build

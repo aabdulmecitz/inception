@@ -20,7 +20,7 @@ These are created automatically by the Makefile.
 ## Build and launch with Makefile + Compose
 - Build images: `make build`
 - Build + run: `make run` (or `make`)
-- Full setup: `make setall`
+- Prerequisite setup only: `make setall`
 - Stop: `make down`
 - Remove containers and local images: `make clean`
 - Full cleanup including volumes: `make fclean`

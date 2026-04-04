@@ -55,13 +55,13 @@ Docker gives process isolation, reproducibility, and clean service boundaries wi
 ### Configuration
 The project requires `srcs/.env` to run.
 - If missing, `make run` auto-generates a default `srcs/.env` template.
-- `make setall` also creates it automatically during one-shot setup.
+- `make setall` also creates it automatically during prerequisite setup.
 - After creation, edit `srcs/.env` with your real credentials and login.
 
 ### Build and run
 - `make run` (recommended)
 - `make` (alias of `make run`)
-- one-shot full setup + run: `make setall`
+- prerequisite setup only: `make setall`
 
 ### Stop
 - `make down`
@@ -75,7 +75,7 @@ The project requires `srcs/.env` to run.
 2. “Only NGINX is exposed, only on `443` with TLS 1.2/1.3.”
 3. “Containers communicate on a dedicated bridge network.”
 4. “Data persists in named volumes mapped to `/home/<login>/data`.”
-5. “`make run` starts everything; `make setall` performs full first-time setup.”
+5. “`make setall` prepares prerequisites (`.env`, host dirs, `/etc/hosts`); `make run` builds and starts everything.”
 
 ## Validation checklist (mandatory)
 - Only NGINX exposes port 443

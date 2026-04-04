@@ -6,7 +6,7 @@
 - `mariadb`: website database
 
 ## Start and stop
-- First-time full setup: `make setall`
+- First-time prerequisite setup: `make setall`
 - Normal start: `make run` (or `make`)
 - Stop: `make down`
 - Rebuild from scratch: `make re`
