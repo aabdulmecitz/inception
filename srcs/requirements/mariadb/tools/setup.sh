@@ -9,6 +9,8 @@ echo "MariaDB service is starting..."
 : "${SQL_PASSWORD:?SQL_PASSWORD is required}"
 : "${SQL_ROOT_PASSWORD:?SQL_ROOT_PASSWORD is required}"
 
+
+
 if [ ! -d /var/lib/mysql/mysql ]; then
     echo "Database starting for the first time..."
     mariadb-install-db --user=mysql --datadir=/var/lib/mysql
@@ -16,6 +18,8 @@ fi
 
 echo "Ensuring database and users..."
 INIT_SQL_FILE="/tmp/mariadb-init.sql"
+
+#rm -f "${INIT_SQL_FILE}"
 
 cat > "${INIT_SQL_FILE}" <<-EOSQL
     CREATE DATABASE IF NOT EXISTS \`${SQL_DATABASE}\`;
@@ -26,7 +30,7 @@ cat > "${INIT_SQL_FILE}" <<-EOSQL
     FLUSH PRIVILEGES;
 EOSQL
 
-chown mysql:mysql "${INIT_SQL_FILE}"
-chmod 600 "${INIT_SQL_FILE}"
+chmod 644 "${INIT_SQL_FILE}"
+[ -e "${INIT_SQL_FILE}" ] || { echo "Failed to create init file"; exit 1; }
 
 exec /usr/sbin/mariadbd --user=mysql --bind-address=0.0.0.0 --init-file="${INIT_SQL_FILE}"
