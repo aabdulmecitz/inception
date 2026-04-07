@@ -1,37 +1,39 @@
-# USER_DOC
+# aozkaya User Guide
 
-## Provided services
-- `nginx`: HTTPS entrypoint (`443` only)
-- `wordpress`: website app (PHP-FPM)
-- `mariadb`: website database
+## Access
+- Site: `https://aozkaya.42.fr`
+- Admin panel: `https://aozkaya.42.fr/wp-admin`
+
+## Services
+- `nginx` is the public HTTPS entrypoint.
+- `wordpress` runs PHP-FPM and serves the application layer.
+- `mariadb` stores the WordPress database.
 
 ## Start and stop
-- First-time prerequisite setup: `make setall`
-- Normal start: `make run` (or `make`)
+- Start: `make`
 - Stop: `make down`
+- Clean images and volumes: `make clean`
+- Full reset including host data: `make fclean`
 - Rebuild from scratch: `make re`
-- Full cleanup: `make fclean`
 
-## Access the website and admin panel
-1. Add your domain in `/etc/hosts` (example):
-   - `127.0.0.1 <login>.42.fr`
-2. Open:
-   - Website: `https://<login>.42.fr`
-   - Admin panel: `https://<login>.42.fr/wp-admin`
+## First run checklist
+1. Add `127.0.0.1 aozkaya.42.fr` to `/etc/hosts`.
+2. Create the secret files required by `srcs/docker-compose.yml`.
+3. Generate `srcs/.env` with `make env` if you want the default template.
+4. Launch the project with `make`.
 
-## Credentials management
-- Credentials are stored in `srcs/.env` (local file).
-- If `srcs/.env` is missing, `make run` auto-creates it with default values.
-- Do not commit real credentials.
-- Edit `srcs/.env` after creation and set your real credentials.
+## Credentials
+- Environment values are stored in `srcs/.env`.
+- Secret values are stored in `secrets/db_password.txt`, `secrets/db_root_password.txt`, and `secrets/credentials.txt`.
+- Do not commit those files.
 
-## Verify services are running correctly
-- Container status: `docker compose -p inception -f srcs/docker-compose.yml ps`
-- Logs: `docker compose -p inception -f srcs/docker-compose.yml logs -f`
-- Check HTTPS: open `https://<login>.42.fr` and confirm certificate/TLS works.
+## What the user should see
+- Visiting the site opens WordPress over HTTPS.
+- The certificate is generated for `aozkaya.42.fr`.
+- WordPress admin and author accounts are created during the first initialization.
 
-## Quick demo for evaluator
-1. Run `make run`.
-2. Show `docker compose -p inception -f srcs/docker-compose.yml ps`.
-3. Open `https://<login>.42.fr` (works), try `http://<login>.42.fr` (must fail).
-4. Log in to `/wp-admin` with admin user (username does not contain `admin`).
+## Validation hints
+- Only port `443` should be exposed publicly.
+- The site should resolve through the local hosts entry.
+- Database and site content should persist across restarts because they live under `/home/aozkaya/data`.
+- To check the stack, use `docker compose -f srcs/docker-compose.yml ps` and `docker compose -f srcs/docker-compose.yml logs`.

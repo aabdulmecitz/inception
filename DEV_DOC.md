@@ -1,78 +1,54 @@
-# DEV_DOC
+# Developer Notes
 
-## Environment setup from scratch
-### Prerequisites
-- Linux VM
-- Docker engine
-- Docker Compose plugin
+## Overview
+This repository contains three Dockerized services on a private bridge network:
+- NGINX as the HTTPS entrypoint.
+- WordPress with PHP-FPM for the application layer.
+- MariaDB for persistence.
 
-### Required configuration files
-- `srcs/.env` (auto-created by `make run` if missing)
-- Optional local secrets files if you extend with Docker secrets
+## Identity used in this workspace
+- Login: `aozkaya`
+- Domain: `aozkaya.42.fr`
+- Data root: `/home/aozkaya/data`
 
-### Host data directories
-The project persists data under:
-- `/home/<login>/data/mariadb`
-- `/home/<login>/data/wordpress`
+## Setup from Scratch
+Prerequisites:
+- A Linux virtual machine with Docker and Docker Compose available.
+- A local hosts entry for `aozkaya.42.fr`.
 
-These are created automatically by the Makefile.
+Required files:
+- `srcs/.env` for environment variables. Generate it with `make env` if you want the default template.
+- `secrets/db_password.txt`, `secrets/db_root_password.txt`, and `secrets/credentials.txt` for credentials.
 
-## Build and launch with Makefile + Compose
-- Build images: `make build`
-- Build + run: `make run` (or `make`)
-- Prerequisite setup only: `make setall`
-- Stop: `make down`
-- Remove containers and local images: `make clean`
-- Full cleanup including volumes: `make fclean`
-- Rebuild all: `make re`
+## Build flow
+1. The Makefile creates the host directories for persistent data.
+2. Compose starts MariaDB first, then WordPress, then NGINX.
+3. MariaDB initializes only once by using a sentinel file in the data volume.
+4. WordPress downloads core files, creates its config, then installs the site if needed.
+5. NGINX serves TLS with a self-signed certificate generated at image build time.
 
-Compose file:
-- `srcs/docker-compose.yml`
+## Build and launch
+- Generate the default environment file: `make env`
+- Build and start: `make`
+- Stop containers: `make down`
+- Remove images and volumes: `make clean`
+- Full reset including host data: `make fclean`
+- Rebuild from scratch: `make re`
 
-## Useful container and volume commands
-- Service status:
-  - `docker compose -p inception -f srcs/docker-compose.yml ps`
-- Follow logs:
-  - `docker compose -p inception -f srcs/docker-compose.yml logs -f`
-- Enter container shell:
-  - `docker compose -p inception -f srcs/docker-compose.yml exec nginx bash`
-  - `docker compose -p inception -f srcs/docker-compose.yml exec wordpress bash`
-  - `docker compose -p inception -f srcs/docker-compose.yml exec mariadb bash`
-- List volumes:
-  - `docker volume ls`
-- Inspect a volume:
-  - `docker volume inspect <volume_name>`
+## Container and Volume Management
+- Check status: `docker compose -f srcs/docker-compose.yml ps`
+- View logs: `docker compose -f srcs/docker-compose.yml logs`
+- Inspect volumes: `docker volume ls` and `docker volume inspect mariadb_vol`
+- The persistent data lives under `/home/aozkaya/data/mariadb` and `/home/aozkaya/data/wordpress`.
 
-## Working inside containers (VM-like usage for debugging)
-You can enter each running container and work interactively (inspect files, run service commands, test configs), similar to a minimal VM workflow.
+## Important files
+- `Makefile` for lifecycle commands.
+- `srcs/docker-compose.yml` for service wiring.
+- `srcs/requirements/mariadb/tools/init-db.sh` for database bootstrap.
+- `srcs/requirements/wordpress/tools/setup-wp.sh` for WordPress bootstrap.
+- `srcs/requirements/nginx/conf/nginx.conf` for the reverse proxy config.
 
-- Open shell in NGINX:
-  - `docker compose -p inception -f srcs/docker-compose.yml exec nginx bash`
-- Open shell in WordPress:
-  - `docker compose -p inception -f srcs/docker-compose.yml exec wordpress bash`
-- Open shell in MariaDB:
-  - `docker compose -p inception -f srcs/docker-compose.yml exec mariadb bash`
-
-Common in-container checks:
-- NGINX config test: `nginx -t`
-- PHP-FPM process check: `ps aux | grep php-fpm`
-- MariaDB login test:
-  - `mariadb -u$SQL_USER -p$SQL_PASSWORD $SQL_DATABASE`
-
-Notes:
-- Containers are not full virtual machines; they are isolated processes.
-- Any package/config changes done manually inside a container are ephemeral after container recreation.
-- Permanent changes must be made in Dockerfiles or setup scripts, then rebuilt.
-
-## Evaluation-oriented checks
-- No forbidden network mode: ensure no `network: host`, no `links`, no `--link`
-- No hacky loop process: no `tail -f`, `sleep infinity`, `while true`
-- NGINX only on port `443`, TLS only `1.2/1.3`
-- Named volumes point to `/home/<login>/data/*`
-- WordPress admin username must not contain `admin`
-
-## Data location and persistence model
-- MariaDB data persists in named volume `mariadb_data`.
-- WordPress data persists in named volume `wordpress_data`.
-- Both named volumes are configured to store host-side data under `/home/<login>/data`.
-- Data remains after container recreation unless removed with full cleanup.
+## Operational notes
+- Keep secrets out of the repository.
+- The stack uses named volumes whose data is stored under `/home/aozkaya/data`.
+- Restart-safe initialization matters more than one-shot setup because volumes survive rebuilds.

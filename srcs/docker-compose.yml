@@ -1,58 +1,75 @@
+version: '3.7'
+
+secrets:
+  db_password:
+    file: ../secrets/db_password.txt
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  credentials:
+    file: ../secrets/credentials.txt
+
 services:
-  nginx:
-    image: nginx
-    build: ./requirements/nginx
-    ports:
-      - "443:443"
-    env_file:
-      - .env
-    depends_on:
-      - wordpress
-    networks:
-      - inception-network
-    volumes:
-      - wordpress_data:/var/www/html:ro
-    # Your containers have to restart in case of a crash so I did this vvv
+  mariadb:
+    container_name: mariadb
+    build: requirements/mariadb
+    image: mariadb
     restart: always
-  
+    env_file: .env
+    secrets:
+      - db_password
+      - db_root_password
+    networks:
+      - inception_network
+    volumes:
+      - mariadb_vol:/var/lib/mysql
+
   wordpress:
+    container_name: wordpress
+    build: requirements/wordpress
     image: wordpress
-    build: ./requirements/wordpress
-    env_file:
-      - .env
+    restart: always
+    env_file: .env
+    secrets:
+      - db_password
+      - credentials
     depends_on:
       - mariadb
     networks:
-      - inception-network
-    restart: always
+      - inception_network
     volumes:
-      - wordpress_data:/var/www/html
-  
-  mariadb:
-    image: mariadb
-    build: ./requirements/mariadb
-    env_file:
-      - .env
+      - wordpress_vol:/var/www/wordpress
+
+  nginx:
+    container_name: nginx
+    build: requirements/nginx
+    image: nginx
+    restart: always
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
     networks:
-      - inception-network
-    restart: always
+      - inception_network
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - wordpress_vol:/var/www/wordpress
 
 networks:
-  inception-network:
+  inception_network:
+    name: inception_network
     driver: bridge
 
 volumes:
-  mariadb_data:
+  mariadb_vol:
+    name: mariadb_vol
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_ROOT}/mariadb
-  wordpress_data:
+      device: /home/aozkaya/data/mariadb
+  wordpress_vol:
+    name: wordpress_vol
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${DATA_ROOT}/wordpress
+      device: /home/aozkaya/data/wordpress

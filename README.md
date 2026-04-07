@@ -1,105 +1,35 @@
 *This project has been created as part of the 42 curriculum by aozkaya.*
 
-# Inception
-
-## Description
-This project builds a secure WordPress stack with Docker Compose in a VM.
-
-Services:
-- `nginx`: only public entrypoint on port `443` with TLS (`v1.2/v1.3`)
-- `wordpress`: PHP-FPM + WordPress
-- `mariadb`: database backend
-
-Infrastructure:
-- one dedicated Docker bridge network
-- two named volumes stored on host under `/home/<login>/data`
-
-## System diagram
-`Browser -> 443/TLS -> NGINX -> wordpress:9000 -> mariadb:3306`
+# Description
+This project sets up a small Docker-based infrastructure for a WordPress website. It uses three dedicated services: NGINX as the TLS entrypoint, WordPress with PHP-FPM for the application layer, and MariaDB for persistence. The goal is to run the stack in a virtual machine with Docker Compose, using custom Dockerfiles and persistent storage for the database and website files.
 
 ## Project Description and Design Choices
-### Why Docker in this project
-Docker gives process isolation, reproducibility, and clean service boundaries with Compose orchestration.
+The stack is built from the penultimate stable Debian image for each service. Each service has its own Dockerfile and runs in its own container. NGINX is the only public entrypoint and exposes port 443 with TLSv1.2 or TLSv1.3 only. WordPress and MariaDB are internal services that communicate over a private Docker network.
 
-### Included sources
-- `Makefile`: build/run lifecycle
-- `srcs/docker-compose.yml`: services, network, volumes
-- `srcs/requirements/nginx`: NGINX Dockerfile + TLS config
-- `srcs/requirements/wordpress`: WordPress/PHP-FPM Dockerfile + setup script
-- `srcs/requirements/mariadb`: MariaDB Dockerfile + init script
+The project includes these sources:
+- `Makefile` for the build and lifecycle commands.
+- `srcs/docker-compose.yml` for service orchestration, networking, volumes, and secrets.
+- `srcs/requirements/nginx` for the NGINX image and TLS configuration.
+- `srcs/requirements/wordpress` for the WordPress + PHP-FPM image and bootstrap script.
+- `srcs/requirements/mariadb` for the MariaDB image and database initialization script.
 
-### Required comparisons
-#### Virtual Machines vs Docker
-- VM: full guest OS, heavier and slower startup.
-- Docker: shared host kernel, lighter and faster.
-
-#### Secrets vs Environment Variables
-- `.env`: convenient for configuration and project variables.
-- Docker secrets: better for sensitive credentials in production.
-
-#### Docker Network vs Host Network
-- Bridge network: isolated traffic + internal DNS by service name.
-- Host network: no isolation, forbidden for this project.
-
-#### Docker Volumes vs Bind Mounts
-- Named volumes: managed persistence and portability.
-- Bind mounts: direct host coupling; more fragile.
+Comparison of the main design choices:
+- Virtual Machines vs Docker: a VM runs a full guest OS, while Docker shares the host kernel and is lighter and faster to start.
+- Secrets vs Environment Variables: environment variables are convenient for non-sensitive configuration, while secrets are better for credentials and passwords.
+- Docker Network vs Host Network: a bridge network isolates services and lets them resolve each other by name, while host networking removes isolation and is forbidden here.
+- Docker Volumes vs Bind Mounts: volumes are the preferred persistent storage mechanism for this project; bind mounts are not allowed for the WordPress data and database storage.
 
 ## Instructions
-### Prerequisites
-- Linux VM
-- Docker + Docker Compose plugin
-- `/etc/hosts` entry for your domain (example):
-  - `127.0.0.1 <login>.42.fr`
-
-### Configuration
-The project requires `srcs/.env` to run.
-- If missing, `make run` auto-generates a default `srcs/.env` template.
-- `make setall` also creates it automatically during prerequisite setup.
-- After creation, edit `srcs/.env` with your real credentials and login.
-
-### Build and run
-- `make run` (recommended)
-- `make` (alias of `make run`)
-- prerequisite setup only: `make setall`
-
-### Stop
-- `make down`
-
-### Clean
-- `make clean` (containers + local images)
-- `make fclean` (full cleanup including volumes)
-
-### Quick defense script (30 seconds)
-1. “There are 3 containers: NGINX, WordPress(PHP-FPM), MariaDB.”
-2. “Only NGINX is exposed, only on `443` with TLS 1.2/1.3.”
-3. “Containers communicate on a dedicated bridge network.”
-4. “Data persists in named volumes mapped to `/home/<login>/data`.”
-5. “`make setall` prepares prerequisites (`.env`, host dirs, `/etc/hosts`); `make run` builds and starts everything.”
-
-## Validation checklist (mandatory)
-- Only NGINX exposes port 443
-- TLS is restricted to v1.2/v1.3
-- No prebuilt service images are pulled
-- Each service has its own Dockerfile/container
-- WordPress and MariaDB persist through named volumes
-- Both volumes store data under `/home/<login>/data`
-- Dedicated Docker network is defined in compose
-- Containers restart on failure
-- WordPress has 2 users (admin + regular user)
+1. Create the required secret files under `secrets/` and the environment file at `srcs/.env`.
+2. Make sure `DOMAIN_NAME` is set to `aozkaya.42.fr` and that `/etc/hosts` maps it to `127.0.0.1`.
+3. Generate `srcs/.env` with `make env` if you want the default template.
+4. Build and start the stack with `make`.
+5. Stop it with `make down`, clean containers and images with `make clean`, and remove persistent host data with `make fclean`.
 
 ## Resources
-- Docker docs: https://docs.docker.com/
-- Compose docs: https://docs.docker.com/compose/
-- NGINX docs: https://nginx.org/en/docs/
-- MariaDB docs: https://mariadb.org/documentation/
-- WordPress CLI docs: https://developer.wordpress.org/cli/commands/
-
-### AI usage disclosure
-AI was used as a learning support system for:
-- understanding mandatory subject expectations and evaluation criteria
-- comparing implementation options before coding
-- reviewing scripts for robustness ideas (runtime checks and env validation)
-- improving documentation clarity and structure
-
-Final technical decisions, implementation, testing, and validation were done manually.
+- Docker documentation: https://docs.docker.com/
+- Docker Compose documentation: https://docs.docker.com/compose/
+- NGINX documentation: https://nginx.org/en/docs/
+- MariaDB documentation: https://mariadb.com/kb/en/documentation/
+- WordPress CLI documentation: https://developer.wordpress.org/cli/commands/
+- AI usage: AI was used to help rewrite and organize the documentation, check the project structure against the subject, and simplify wording. Final project decisions, implementation details, and validation were reviewed manually.
