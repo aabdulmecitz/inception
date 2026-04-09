@@ -11,45 +11,54 @@ services:
     container_name: mariadb
     build: requirements/mariadb
     image: mariadb
-    restart: always
     env_file: .env
     secrets:
       - db_password
       - db_root_password
-    networks:
-      - inception_network
+    
     volumes:
       - mariadb_vol:/var/lib/mysql
+    
+    networks:
+      - inception_network
+    
+    restart: always
 
   wordpress:
     container_name: wordpress
     build: requirements/wordpress
     image: wordpress
-    restart: always
     env_file: .env
     secrets:
       - db_password
       - credentials
     depends_on:
       - mariadb
-    networks:
-      - inception_network
+    
     volumes:
       - wordpress_vol:/var/www/wordpress
 
+    networks:
+      - inception_network
+    
+    restart: always
+  
   nginx:
     container_name: nginx
     build: requirements/nginx
     image: nginx
-    restart: always
     depends_on:
       - wordpress
     ports:
       - "443:443"
-    networks:
-      - inception_network
+    
     volumes:
       - wordpress_vol:/var/www/wordpress
+    
+    networks:
+      - inception_network
+    
+    restart: always
 
 networks:
   inception_network:
@@ -57,6 +66,7 @@ networks:
     driver: bridge
 
 volumes:
+  
   mariadb_vol:
     name: mariadb_vol
     driver: local
@@ -64,6 +74,7 @@ volumes:
       type: none
       o: bind
       device: /home/aozkaya/data/mariadb
+  
   wordpress_vol:
     name: wordpress_vol
     driver: local
