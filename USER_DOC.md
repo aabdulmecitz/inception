@@ -17,14 +17,17 @@
 - Rebuild from scratch: `make re`
 
 ## First run checklist
-1. Add `127.0.0.1 aozkaya.42.fr` to `/etc/hosts`.
-2. Create the secret files required by `srcs/docker-compose.yml`.
-3. Generate `srcs/.env` with `make env` if you want the default template.
+1. Run `make init` to generate `srcs/.env` and create secret file templates.
+2. Add `127.0.0.1 aozkaya.42.fr` to `/etc/hosts` once.
+3. Fill the files in `secrets/` with real credentials.
 4. Launch the project with `make`.
 
 ## Credentials
 - Environment values are stored in `srcs/.env`.
 - Secret values are stored in `secrets/db_password.txt`, `secrets/db_root_password.txt`, and `secrets/credentials.txt`.
+- `secrets/credentials.txt` must include at least:
+	- `WP_ADMIN_PASSWORD=...`
+	- `WP_USER_PASSWORD=...`
 - Do not commit those files.
 
 ## What the user should see

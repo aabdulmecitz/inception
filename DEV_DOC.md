@@ -17,8 +17,9 @@ Prerequisites:
 - A local hosts entry for `aozkaya.42.fr`.
 
 Required files:
-- `srcs/.env` for environment variables. Generate it with `make env` if you want the default template.
+- `srcs/.env` for environment variables.
 - `secrets/db_password.txt`, `secrets/db_root_password.txt`, and `secrets/credentials.txt` for credentials.
+- Generate all templates with `make init`, then fill secret files manually.
 
 ## Build flow
 1. The Makefile creates the host directories for persistent data.
@@ -28,12 +29,18 @@ Required files:
 5. NGINX serves TLS with a self-signed certificate generated at image build time.
 
 ## Build and launch
-- Generate the default environment file: `make env`
+- Generate `.env` + secret templates: `make init`
 - Build and start: `make`
 - Stop containers: `make down`
 - Remove images and volumes: `make clean`
 - Full reset including host data: `make fclean`
 - Rebuild from scratch: `make re`
+
+## Mandatory checkpoints
+- Only `nginx` exposes port `443`; `wordpress` and `mariadb` stay internal.
+- TLS is limited to `TLSv1.2` and `TLSv1.3` in the NGINX configuration.
+- Credentials are loaded from Docker secrets and are not hardcoded in Dockerfiles.
+- Persistent data is stored under `/home/aozkaya/data` through named volumes.
 
 ## Container and Volume Management
 - Check status: `docker compose -f srcs/docker-compose.yml ps`

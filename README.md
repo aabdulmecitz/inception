@@ -20,11 +20,11 @@ Comparison of the main design choices:
 - Docker Volumes vs Bind Mounts: volumes are the preferred persistent storage mechanism for this project; bind mounts are not allowed for the WordPress data and database storage.
 
 ## Instructions
-1. Create the required secret files under `secrets/` and the environment file at `srcs/.env`.
-2. Make sure `DOMAIN_NAME` is set to `aozkaya.42.fr` and that `/etc/hosts` maps it to `127.0.0.1`.
-3. Generate `srcs/.env` with `make env` if you want the default template.
+1. Run `make init` to generate `srcs/.env` and create local secret templates under `secrets/`.
+2. Fill `secrets/db_password.txt`, `secrets/db_root_password.txt`, and `secrets/credentials.txt` with real values.
+3. Make sure `DOMAIN_NAME=aozkaya.42.fr` and `/etc/hosts` contains `127.0.0.1 aozkaya.42.fr`.
 4. Build and start the stack with `make`.
-5. Stop it with `make down`, clean containers and images with `make clean`, and remove persistent host data with `make fclean`.
+5. Stop it with `make down`, clean containers/images/volumes with `make clean`, and remove persistent host data with `make fclean`.
 
 ## Resources
 - Docker documentation: https://docs.docker.com/
