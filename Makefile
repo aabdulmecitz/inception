@@ -1,4 +1,4 @@
-COMPOSE		= docker-compose -f srcs/docker-compose.yml
+COMPOSE		= docker compose -f srcs/docker-compose.yml
 DATA_DIR	= /home/aozkaya/data
 ENV_FILE	= srcs/.env
 SECRETS_DIR	= secrets
@@ -9,11 +9,14 @@ init: env secrets
 
 secrets:
 	@mkdir -p $(SECRETS_DIR)
-	@touch $(SECRETS_DIR)/db_password.txt
-	@touch $(SECRETS_DIR)/db_root_password.txt
-	@touch $(SECRETS_DIR)/credentials.txt
+	@test -s $(SECRETS_DIR)/db_password.txt || printf '%s\n' 'ChangeMe_DbPassword_42!' > $(SECRETS_DIR)/db_password.txt
+	@test -s $(SECRETS_DIR)/db_root_password.txt || printf '%s\n' 'ChangeMe_DbRootPassword_42!' > $(SECRETS_DIR)/db_root_password.txt
+	@test -s $(SECRETS_DIR)/credentials.txt || printf '%s\n' \
+		'WP_ADMIN_PASSWORD=ChangeMe_AdminPassword_42!' \
+		'WP_USER_PASSWORD=ChangeMe_UserPassword_42!' \
+		> $(SECRETS_DIR)/credentials.txt
 	@chmod 600 $(SECRETS_DIR)/db_password.txt $(SECRETS_DIR)/db_root_password.txt $(SECRETS_DIR)/credentials.txt
-	@echo "Secrets templates ready in $(SECRETS_DIR)/"
+	@echo "Secrets ready in $(SECRETS_DIR)/ (existing values preserved)"
 
 env:
 	@mkdir -p $(dir $(ENV_FILE))
