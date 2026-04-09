@@ -32,4 +32,4 @@ Comparison of the main design choices:
 - NGINX documentation: https://nginx.org/en/docs/
 - MariaDB documentation: https://mariadb.com/kb/en/documentation/
 - WordPress CLI documentation: https://developer.wordpress.org/cli/commands/
-- AI usage: AI was used to help rewrite and organize the documentation, check the project structure against the subject, and simplify wording. Final project decisions, implementation details, and validation were reviewed manually.
+- AI usage: AI was used as a drafting aid to help rewrite and organize the documentation and refine the wording. Final project decisions, implementation details, and validation were reviewed manually.
